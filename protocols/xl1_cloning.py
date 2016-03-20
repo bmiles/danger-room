@@ -4,7 +4,15 @@ import json
 
 p = Protocol()
 
-pGFP = p.ref("gfp", id=None, cont_type="micro-1.5", storage="cold_20", discard=None)
+num_xfm = 1
+xl1_res = #resource id for xl1
+xl1_quant = num_xfm * Unit(100, "microliter")
+
+
+
+p.provision(xl1_res, cells.well(0), xl1_quant)
+
+dna = p.ref("dna", id=None, cont_type="micro-1.5", storage="cold_20", discard=None)
 cells = p.ref("xl1", id=None, cont_type="micro-1.5", storage=None, discard=True)
 soc = p.ref("soc", id=None, cont_type="micro-1.5", storage=None, discard=True)
 x_plate = p.ref("xf_plate", id=None, cont_type="96-pcr", storage=None, discard=True)
@@ -12,15 +20,22 @@ b_mercap = p.ref("b_mercap", id=None, cont_type="micro-1.5", storage="ambient", 
 spread_plate = p.ref(name, id=None, cont_type="cont_type", storage=None, discard=None)
 cult_plate = p.ref("cult_plate", id=None, cont_type="96-flat", storage="cold_4", discard=None)
 
-p.mix(cells.well(0), "100:microliter", speed="25:microliter/second", repetitions=10)
+xfm_wells = x_plate.wells_from(0, num_xfm)
+
 p.incubate(x_plate, "cold_20", "30:minute", shaking=False, co2=0)
-p.transfer(cells.well(0), x_plate.well(0), "100:microliter")
-p.transfer(b_mercap.well(0), x_plate.well(0), "1.7:microliter")
-for i in irange(0, 5):
-    p.mix(x_plate.well(0), "50:microliter", speed="10:microliter/second", repetitions=10)
-    p.incubate(x_plate, "cold_4", "2:minute", shaking=False, co2=0)
-    i += 1
-p.transfer(cell.well(0), x_plate.well(0), "2:microliter")
+p.mix(cells.well(0), 0.25 * xl1_quant, speed="25:microliter/second", repetitions=10)
+
+for well in xfm_wells:
+    p.transfer(cells.well(0), well, "100:microliter")
+    p.transfer(b_mercap.well(0), well, "1.7:microliter")
+
+for well in xfm_wells:
+    p.mix(well, "50:microliter", speed="10:microliter/second", repetitions=10)
+p.incubate(x_plate, "cold_4", "2:minute", shaking=False, co2=0)
+
+for well in xfm_wells:
+    p.transfer(dna.well(0), well, "2:microliter")
+
 p.incubate(x_plate, cold_4, "30:minute", shaking=False, co2=0)
 p.thermocycle(x_plate, [
              {"cycles": 1,
@@ -34,9 +49,13 @@ p.thermocycle(x_plate, [
                 }]
             }])
 
-p.transfer(soc.well(0), x_plate.well(0), "900:microliter")
+for well in xfm_wells:
+    p.transfer(soc.well(0), well, "900:microliter") #exceeds well volume
 p.incubate(x_plate, "warm_37", "1:hour", shaking=False, co2=0)
-p.spread(x_plate.well(0), spread_plate.wells_from(0, 2), "50:microliter")
+
+for well in xfm_wells:
+    p.spread(well, spread_plate.wells_from(0, 2), "50:microliter")
+
 p.incubate(spread_plate, "warm_37", "25:hour", shaking=False, co2=0)
 p.autopick(spread_plate, cult_plate.wells_from(0, 96), min_count=0)
 p.cover(cult_plate)
