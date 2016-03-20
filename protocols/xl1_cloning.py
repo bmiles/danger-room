@@ -17,6 +17,8 @@ import json
 
 p = Protocol()
 
+
+
 num_xfm = 1
 xl1_res = "resource"#resource id for xl1
 xl1_quant = num_xfm * Unit(100, "microliter")
@@ -27,7 +29,7 @@ cells = p.ref("xl1", id=None, cont_type="micro-1.5", storage=None, discard=True)
 soc = p.ref("soc", id=None, cont_type="micro-1.5", storage=None, discard=True)
 x_plate = p.ref("xf_plate", id=None, cont_type="96-pcr", storage=None, discard=True)
 b_mercap = p.ref("b_mercap", id=None, cont_type="micro-1.5", storage="ambient", discard=None)
-spread_plate = p.ref("spread_plate", id=None, cont_type="96-flat", storage="cold_4", discard=None)
+spread_plate = ref_kit_container(protocol=p, name="spread_plate", container="6-flat", kit_id=return_agar_plates()["lb_miller_100ug_ml_amp"],discard=False, store="cold_4")
 cult_plate = p.ref("cult_plate", id=None, cont_type="96-flat", storage="cold_4", discard=None)
 iptg_plate =  p.ref("iptg_plate", id=None, cont_type="96-flat", storage="cold_4", discard=None)
 
