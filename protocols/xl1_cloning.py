@@ -1,3 +1,15 @@
+"""
+Boostraps the mutation process by inserting a gene containing plasmid into the
+XL-1 mutator strain and initiates the first culture and fluorescence read.
+"""
+
+
+# TODO Needs pUC 18 control transformation per agar plate.
+# TODO Needs to plate a full agar plate in order to generate 96 picks
+# TODO prewarm SOC media
+
+
+
 from autoprotocol import *
 from promodules import transformation_module
 import json
@@ -19,6 +31,7 @@ x_plate = p.ref("xf_plate", id=None, cont_type="96-pcr", storage=None, discard=T
 b_mercap = p.ref("b_mercap", id=None, cont_type="micro-1.5", storage="ambient", discard=None)
 spread_plate = p.ref(name, id=None, cont_type="cont_type", storage=None, discard=None)
 cult_plate = p.ref("cult_plate", id=None, cont_type="96-flat", storage="cold_4", discard=None)
+iptg_plate =  # should already exist in inventory.
 
 xfm_wells = x_plate.wells_from(0, num_xfm)
 
@@ -29,29 +42,42 @@ for well in xfm_wells:
     p.transfer(cells.well(0), well, "100:microliter")
     p.transfer(b_mercap.well(0), well, "1.7:microliter")
 
-for well in xfm_wells:
-    p.mix(well, "50:microliter", speed="10:microliter/second", repetitions=10)
-p.incubate(x_plate, "cold_4", "2:minute", shaking=False, co2=0)
+for i in irange(0,5):
+    for well in xfm_wells:
+        p.mix(well, "50:microliter", speed="10:microliter/second", repetitions=10)
+    p.thermocycle(x_plate, [
+        {"cycles": 1,
+            "steps": [{
+                "temperature": "0:celsius",
+                "duration": "2:minute",
+                }]
+        }
+    ])
+
 
 for well in xfm_wells:
     p.transfer(dna.well(0), well, "2:microliter")
 
 p.incubate(x_plate, cold_4, "30:minute", shaking=False, co2=0)
 p.thermocycle(x_plate, [
-             {"cycles": 1,
-              "steps": [{
-                "temperature": "42:celsius",
-                "duration": "45:second",
-                },
-                {
-                  "temperature": "0:celsius",
-                  "duration": "2:minute",
-                }]
-            }])
+    {"cycles": 1,
+        "steps": [{
+            "temperature": "42:celsius",
+            "duration": "45:second",
+            },
+            {
+                "temperature": "0:celsius",
+                "duration": "2:minute",
+            }
+        ]
+    }
+])
 
 for well in xfm_wells:
-    p.transfer(soc.well(0), well, "900:microliter") #exceeds well volume
+    p.transfer(soc.well(0), well, "900:microliter")  # exceeds well volume
 p.incubate(x_plate, "warm_37", "1:hour", shaking=False, co2=0)
+
+p.dispense_full_plate(cult_plate, "lb-broth-100-ml-Amp", "150:microliter")
 
 for well in xfm_wells:
     p.spread(well, spread_plate.wells_from(0, 2), "50:microliter")
@@ -59,7 +85,14 @@ for well in xfm_wells:
 p.incubate(spread_plate, "warm_37", "25:hour", shaking=False, co2=0)
 p.autopick(spread_plate, cult_plate.wells_from(0, 96), min_count=0)
 p.cover(cult_plate)
-p.incubate(cult_plate, "warm_37", "16:hour", shaking=True, co2=0)
+# Grow
+p.incubate(cult_plate, "warm_37", "12:hour", shaking=True, co2=0)
+# Induce
+p.unseal(iptg_plate)
+p.stamp(iptg_plate, x_plate, "5:microliter", mix_after=True, mix_vol="100:microliter", repetitions=10, flowrate="25:microliter/second")
+p.seal(iptg_plate)
+p.incubate(cult_plate, "warm_37", "4:hour", shaking=True, co2=0)
+# Data
 p.fluorescence(cult_plate, cult_plate.wells_from(0, 96), "485:nanometer", "532:nanometer", dataref=fl_reuslt)
 
 
