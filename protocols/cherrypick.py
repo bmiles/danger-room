@@ -4,6 +4,8 @@ Analysis will instruct cherryPick to select wells.
 
 from autoprotocol import *
 from autoprotocol_utilities import *
+from mutant_tagger import generate_name
+
 import json
 def cherryPick(container_id, selected_wells):
     p = Protocol()
@@ -12,6 +14,9 @@ def cherryPick(container_id, selected_wells):
     spread_plate = ref_kit_container(p, "spread_plate", "6-flat", return_agar_plates()["lb_miller_100ug_ml_amp"], discard=True, store=None)
     iptg_plate = p.ref("iptg_plate", id=None, cont_type="96-flat", storage="cold_4", discard=None)
 
+    for well in target_plate.all_wells():
+        well.set_properties({"mutant_id": generate_name()})
+        print well.properties
     top_wells = source_plate.wells(selected_wells)
 
     for i in range(0,len(top_wells)):
