@@ -16,7 +16,7 @@ def cherryPick(container_id, selected_wells):
 
     for well in target_plate.all_wells():
         well.set_properties({"mutant_id": generate_name()})
-        print well.properties
+
     top_wells = source_plate.wells(selected_wells)
 
     for i in range(0,len(top_wells)):
@@ -43,6 +43,6 @@ def cherryPick(container_id, selected_wells):
     p.absorbance(target_plate, target_plate.wells_from(0, 96), "600:nm", dataref="abs_result")
     print json.dumps(p.as_dict())
 
-s_wells = [0,5,7]
+#s_wells = [0,5,7]
 
-cherryPick("ct_id", s_wells)
+# cherryPick("ct_id", s_wells)
