@@ -4,6 +4,7 @@ This is a sketch
 
 from itertools import islice
 from transcriptic import db
+from cherrypick import cherryPick
 
 class Mutator(object):
     def protocol(self, aliquots):
